@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  apicustomer:
+    build: .
+    container_name: apicustomer
+    ports:
+      - "9090:9090"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:/app/data/customerdb;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.h2.Driver
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.H2Dialect
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_H2_CONSOLE_ENABLED=true
+      - SPRING_H2_CONSOLE_PATH=/h2-console
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - apicustomer-network
+
+networks:
+  apicustomer-network:
+    name: apicustomer-network
+    driver: bridge

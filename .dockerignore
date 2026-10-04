@@ -1,0 +1,11 @@
+gradle/
+build/
+.gradle/
+data/
+.git/
+.gitignore
+README.md
+HELP.md
+*.md
+!Dockerfile
+.env
