@@ -1,5 +1,5 @@
 # Build stage
-FROM gradle:9.0.0-jdk21 AS build
+FROM gradle:9.8.0-jdk25 AS build
 WORKDIR /build
 
 # Copy gradle files for dependency caching
@@ -13,7 +13,7 @@ COPY src/ src/
 RUN gradle build --no-daemon -x test
 
 # Run stage
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 
 # Create non-root user

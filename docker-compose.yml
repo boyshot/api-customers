@@ -1,9 +1,8 @@
-version: '3.8'
-
 services:
   apicustomer:
     build: .
     container_name: apicustomer
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
     ports:
       - "9090:9090"
     environment:

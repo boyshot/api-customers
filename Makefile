@@ -1,12 +1,21 @@
-.PHONY: build build-image run stop clean logs help clean-db
+.PHONY: build test build-image run stop clean logs help clean-db rebuild
 
 PROJECT_NAME := apicustomer
 IMAGE_NAME := $(PROJECT_NAME):latest
 CONTAINER_NAME := $(PROJECT_NAME)
 
+ifeq ($(origin JAVA_HOME), undefined)
+SDKMAN_JAVA_HOME := $(shell readlink -f "$$HOME/.sdkman/candidates/java/current" 2>/dev/null)
+ifneq ($(strip $(SDKMAN_JAVA_HOME)),)
+export JAVA_HOME := $(SDKMAN_JAVA_HOME)
+export PATH := $(JAVA_HOME)/bin:$(PATH)
+endif
+endif
+
 help:
 	@echo "Comandos disponíveis:"
 	@echo "  make build       - Build da aplicação Java com Gradle"
+	@echo "  make test        - Executar os testes"
 	@echo "  make build-image - Build da imagem Docker"
 	@echo "  make run         - Iniciar a aplicação com Docker Compose"
 	@echo "  make stop        - Parar a aplicação"
@@ -19,21 +28,25 @@ build:
 	@echo "Building application with Gradle..."
 	./gradlew build -x test
 
+test:
+	@echo "Running tests with Gradle..."
+	./gradlew test
+
 build-image:
 	@echo "Building Docker image..."
 	docker build -t $(IMAGE_NAME) .
 
 run:
 	@echo "Starting application..."
-	docker-compose up -d
+	docker compose up -d
 
 stop:
 	@echo "Stopping application..."
-	docker-compose down
+	docker compose down
 
 clean:
 	@echo "Cleaning..."
-	docker-compose down -v --rmi all
+	docker compose down -v --rmi all
 	./gradlew clean
 
 clean-db:
@@ -47,7 +60,7 @@ clean-db:
 
 logs:
 	@echo "Showing logs..."
-	docker-compose logs -f
+	docker compose logs -f
 
 rebuild: clean build-image run
 	@echo "Rebuild complete. Application starting..."

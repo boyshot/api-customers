@@ -87,6 +87,7 @@ O projeto inclui um Makefile com comandos automatizados:
 |---------|-----------|
 | `make help` | Exibe todos os comandos disponíveis |
 | `make build` | Build da aplicação com Gradle |
+| `make test` | Executar os testes com Gradle |
 | `make build-image` | Build da imagem Docker |
 | `make run` | Iniciar a aplicação com Docker Compose |
 | `make stop` | Parar a aplicação |
@@ -94,6 +95,8 @@ O projeto inclui um Makefile com comandos automatizados:
 | `make clean-db` | Deletar banco de dados H2 (útil para reiniciar do zero) |
 | `make logs` | Visualizar logs em tempo real |
 | `make rebuild` | Limpar e reiniciar tudo (clean + build + run) |
+
+Os comandos Make que usam Gradle detectam automaticamente o Java ativo do SDKMAN (`~/.sdkman/candidates/java/current`) quando `JAVA_HOME` não está definido. Para a IDE, configure o SDK do projeto e o Gradle JVM como Java 25 em **File > Project Structure > SDKs** e **Settings > Build, Execution, Deployment > Build Tools > Gradle**.
 
 ### Comando clean-db
 
@@ -362,7 +365,7 @@ src/test/java/com/example/apicustomer/
 
 ```bash
 # Executar todos os testes
-./gradlew test
+make test
 
 # Executar apenas testes do service
 ./gradlew test --tests "*CustomerServiceTest"
