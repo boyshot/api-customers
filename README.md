@@ -154,6 +154,21 @@ docker rm apicustomer
 
 ## Endpoints da API
 
+### Listar usuários da API externa
+```http
+GET /api/users
+```
+
+O endpoint consulta `GET http://localhost:5000/users`. O endereço pode ser alterado por `users.api.base-url`. O cliente usa timeout de conexão de 2 segundos e timeout de leitura de 3 segundos; falhas de rede e respostas HTTP 5xx recebem até 3 tentativas com espera exponencial. O circuit breaker abre após uma taxa de falha de 50% em uma janela de 10 chamadas (mínimo de 5), permanece aberto por 30 segundos e permite 3 chamadas de teste no estado half-open. Erros 4xx não são repetidos nem contabilizados como falhas do circuit breaker.
+
+A API externa deve retornar um array JSON de usuários, desserializado para `UserResponse`:
+```json
+[
+  { "id": "92d4670e-bc6b-4c18-820e-7e4a1f4c5c7e", "name": "Paulo Rocha" },
+  { "id": "753c6648-1a6d-4c26-be57-bc1d454b518f", "name": "Ash" }
+]
+```
+
 ### Listar todos os clientes
 ```http
 GET /api/customers
