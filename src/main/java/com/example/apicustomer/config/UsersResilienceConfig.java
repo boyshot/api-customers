@@ -4,6 +4,8 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.HttpServerErrorException;
@@ -13,6 +15,8 @@ import java.time.Duration;
 
 @Configuration
 public class UsersResilienceConfig {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UsersResilienceConfig.class);
 
     @Bean
     CircuitBreaker usersCircuitBreaker() {
@@ -27,7 +31,20 @@ public class UsersResilienceConfig {
             .permittedNumberOfCallsInHalfOpenState(3) //define o número de chamadas permitidas enquanto o circuito está em estado half-open.
             .recordException(UsersResilienceConfig::isTransientFailure) // contabiliza como falhas apenas erros de rede (ResourceAccessException) e respostas HTTP 5xx (HttpServerErrorException). Outros erros não são registrados como falha pelo circuit breaker.
             .build();
-        return CircuitBreaker.of("users-api", config);
+
+        CircuitBreaker circuitBreaker = CircuitBreaker.of("users-api", config);
+        circuitBreaker.getEventPublisher()
+            .onStateTransition(event -> LOGGER.warn(
+                "Circuit breaker '{}' mudou de estado: {}",
+                circuitBreaker.getName(),
+                event.getStateTransition()
+            ))
+            .onCallNotPermitted(event -> LOGGER.warn(
+                "Circuit breaker '{}' recusou a chamada: circuito aberto",
+                circuitBreaker.getName()
+            ));
+
+        return circuitBreaker;
     }
 
     @Bean
@@ -37,7 +54,20 @@ public class UsersResilienceConfig {
             .intervalFunction(attempt -> Math.min(200L * (1L << (attempt - 1)), 1_000L)) // define espera exponencial entre tentativas: 200 ms e depois 400 ms; o cálculo tem limite máximo de 1 segundo
             .retryOnException(UsersResilienceConfig::isTransientFailure) // repete apenas erros de rede e respostas HTTP 5xx. Respostas HTTP 4xx não são repetidas.
             .build();
-        return Retry.of("users-api", config);
+
+        Retry retry = Retry.of("users-api", config);
+        retry.getEventPublisher().onRetry(event -> {
+            Throwable cause = event.getLastThrowable();
+            LOGGER.warn(
+                "Retry '{}' executando tentativa {} após {}: {}",
+                retry.getName(),
+                event.getNumberOfRetryAttempts(),
+                cause.getClass().getSimpleName(),
+                cause.getMessage()
+            );
+        });
+
+        return retry;
     }
 
     private static boolean isTransientFailure(Throwable throwable) {
