@@ -2,29 +2,24 @@ package com.example.apicustomer.service;
 
 import com.example.apicustomer.client.UsersApiClient;
 import com.example.apicustomer.dto.UserResponse;
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
-import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 @Service
 public class UsersService {
 
     private final UsersApiClient usersApiClient;
-    private final CircuitBreaker circuitBreaker;
-    private final Retry retry;
 
-    public UsersService(UsersApiClient usersApiClient, CircuitBreaker circuitBreaker, Retry retry) {
+    public UsersService(UsersApiClient usersApiClient) {
         this.usersApiClient = usersApiClient;
-        this.circuitBreaker = circuitBreaker;
-        this.retry = retry;
     }
 
+    @CircuitBreaker(name = "users-api")
+    @Retry(name = "users-api")
     public List<UserResponse> findAll() {
-        Supplier<List<UserResponse>> apiCall = usersApiClient::fetchUsers;
-        Supplier<List<UserResponse>> retryingCall = Retry.decorateSupplier(retry, apiCall);
-        return CircuitBreaker.decorateSupplier(circuitBreaker, retryingCall).get();
+        return usersApiClient.fetchUsers();
     }
 }

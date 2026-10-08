@@ -19,10 +19,12 @@ repositories {
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-aspectj")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
-	implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.4.0")
-	implementation("io.github.resilience4j:resilience4j-retry:2.4.0")
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
+	implementation("io.github.resilience4j:resilience4j-spring-boot4:2.4.0")
+	runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 	runtimeOnly("com.h2database:h2")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

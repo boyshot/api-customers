@@ -2,8 +2,10 @@ package com.example.apicustomer.config;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +21,7 @@ public class UsersResilienceConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(UsersResilienceConfig.class);
 
     @Bean
-    CircuitBreaker usersCircuitBreaker() {
+    CircuitBreaker usersCircuitBreaker(CircuitBreakerRegistry registry) {
         CircuitBreakerConfig config = CircuitBreakerConfig.custom()
             .failureRateThreshold(50) // abre o circuito quando pelo menos 50% das chamadas contabilizadas falham.
             .slowCallRateThreshold(50) //também pode abrir o circuito quando pelo menos 50% das chamadas forem consideradas lentas.
@@ -32,7 +34,7 @@ public class UsersResilienceConfig {
             .recordException(UsersResilienceConfig::isTransientFailure) // contabiliza como falhas apenas erros de rede (ResourceAccessException) e respostas HTTP 5xx (HttpServerErrorException). Outros erros não são registrados como falha pelo circuit breaker.
             .build();
 
-        CircuitBreaker circuitBreaker = CircuitBreaker.of("users-api", config);
+        CircuitBreaker circuitBreaker = registry.circuitBreaker("users-api", config);
         circuitBreaker.getEventPublisher()
             .onStateTransition(event -> LOGGER.warn(
                 "Circuit breaker '{}' mudou de estado: {}",
@@ -48,14 +50,14 @@ public class UsersResilienceConfig {
     }
 
     @Bean
-    Retry usersRetry() {
+    Retry usersRetry(RetryRegistry registry) {
         RetryConfig config = RetryConfig.custom()
             .maxAttempts(5) //permite até 5 chamadas no total — a primeira tentativa e até 4 repetições.
             .intervalFunction(attempt -> Math.min(200L * (1L << (attempt - 1)), 1_000L)) // define espera exponencial entre tentativas: 200 ms e depois 400 ms; o cálculo tem limite máximo de 1 segundo
             .retryOnException(UsersResilienceConfig::isTransientFailure) // repete apenas erros de rede e respostas HTTP 5xx. Respostas HTTP 4xx não são repetidas.
             .build();
 
-        Retry retry = Retry.of("users-api", config);
+        Retry retry = registry.retry("users-api", config);
         retry.getEventPublisher().onRetry(event -> {
             Throwable cause = event.getLastThrowable();
             LOGGER.warn(

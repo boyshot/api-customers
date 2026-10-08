@@ -159,7 +159,21 @@ docker rm apicustomer
 GET /api/users
 ```
 
-O endpoint consulta `GET http://localhost:5000/users`. O endereço pode ser alterado por `users.api.base-url`. O cliente usa timeout de conexão de 2 segundos e timeout de leitura de 3 segundos; falhas de rede e respostas HTTP 5xx recebem até 3 tentativas com espera exponencial. O circuit breaker abre após uma taxa de falha de 50% em uma janela de 10 chamadas (mínimo de 5), permanece aberto por 30 segundos e permite 3 chamadas de teste no estado half-open. Erros 4xx não são repetidos nem contabilizados como falhas do circuit breaker.
+O endpoint consulta `GET http://localhost:5000/users`. O endereço pode ser alterado por `users.api.base-url`. O cliente usa timeout de conexão de 2 segundos e timeout de leitura de 3 segundos. A resiliência é aplicada declarativamente em `UsersService.findAll()` pelas anotações `@Retry(name = "users-api")` e `@CircuitBreaker(name = "users-api")`; falhas de rede e respostas HTTP 5xx recebem até 5 tentativas no total, com espera exponencial. O circuit breaker abre após uma taxa de falha de 50% em uma janela de 10 chamadas (mínimo de 5), permanece aberto por 30 segundos e permite 3 chamadas de teste no estado half-open. Erros 4xx não são repetidos nem contabilizados como falhas do circuit breaker.
+
+### Observabilidade de resiliência
+
+O Resilience4j Spring Boot 4 integra o circuit breaker e o retry com o Spring Boot Actuator e o Micrometer/Prometheus. Os endpoints de observabilidade estão disponíveis na aplicação local e no Docker:
+
+| Endpoint | Conteúdo |
+|----------|----------|
+| `/actuator/health` | Estado de saúde da aplicação |
+| `/actuator/circuitbreakers` e `/actuator/circuitbreakerevents` | Estado e eventos dos circuit breakers |
+| `/actuator/retries` e `/actuator/retryevents` | Estado e eventos dos retries |
+| `/actuator/metrics` | Métricas Micrometer |
+| `/actuator/prometheus` | Métricas em formato Prometheus |
+
+As métricas incluem chamadas, falhas, estado e duração do circuit breaker, além de chamadas do retry. Por exemplo, `/actuator/metrics/resilience4j.circuitbreaker.calls?tag=name:users-api` consulta as chamadas do circuit breaker `users-api`.
 
 A API externa deve retornar um array JSON de usuários, desserializado para `UserResponse`:
 ```json
