@@ -45,7 +45,7 @@ public class ResilienceDefaultConfig {
         return CircuitBreakerConfig.custom()
             .failureRateThreshold(50) // abre o circuito quando pelo menos 50% das chamadas contabilizadas falham.
             .slowCallRateThreshold(50) //também pode abrir o circuito quando pelo menos 50% das chamadas forem consideradas lentas.
-            .slowCallDurationThreshold(Duration.ofSeconds(2)) //define o tempo limite para considerar uma chamada lenta.
+            .slowCallDurationThreshold(Duration.ofSeconds(5)) //define o tempo limite para considerar uma chamada lenta.
             .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED) //avalia as 10 chamadas mais recentes.
             .slidingWindowSize(10) //avalia as 10 chamadas mais recentes.
             .minimumNumberOfCalls(5) //define o número mínimo de chamadas para avaliar o estado do circuito.
